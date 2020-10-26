@@ -40,7 +40,7 @@ for i in range(0,simulations):
     # Initialize On/Off cell states
     state_vec=np.array([0,1]*math.floor(N/2)+[0]*(N%2))
 
-    # Start Simulations
+    # Start Simulation
     
     # Store system state at every iteration
     traj=np.zeros([N,iterations+1]) 
