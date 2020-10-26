@@ -34,10 +34,10 @@ for x1 in range(0,int(np.sqrt(N))):
 macrostate_list=np.zeros([simulations,1])
 for i in range(0,simulations):
     
-    #Initialize K (Concentration Threshold) Matrix 
+    # Initialize K (Concentration Threshold) Matrix 
     k_vec=abs(np.random.normal(loc=k_mu,scale=k_sigma,size=(1,N)))
 
-    # On/Off cell states
+    # Initialize On/Off cell states
     state_vec=np.array([0,1]*math.floor(N/2)+[0]*(N%2))
 
     # Start Simulations
