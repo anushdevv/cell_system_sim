@@ -27,8 +27,8 @@ for x1 in range(0,int(np.sqrt(N))):
             for y2 in range(0,int(np.sqrt(N))):
                 dist=np.sqrt((r0*(x2-x1))**2+(r0*(y2-y1))**2)
                 dist_mat[idx1,idx2]=dist
-                idx2=idx2+1
-        idx1=idx1+1
+                idx2+=1
+        idx1+=1
 
 # Run Simulations
 macrostate_list=np.zeros([simulations,1])
