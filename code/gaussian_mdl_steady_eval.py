@@ -44,7 +44,12 @@ for x1 in range(0,dim):
                 if idx1==idxc:
                     x=r0*(x2-x1)
                     y=r0*(y2-y1)
-                    theta=np.arctan(y/float(x+0.000000001))
+                    
+                    # Compute modified theta
+                    if (x>=0 and y<0) | (x>0 and y>0):
+                        theta=np.arctan(y/float(x+0.0000000000000001))
+                    else:
+                        theta=np.exp(-np.arctan(y/float(x+0.0000000000000001)))+10
                     thetas[idx2]=theta
                     
                 idx2+=1
@@ -88,24 +93,35 @@ for i in range(0,simulations):
         traj[:,itr+1]=state_vec
     
     steady=traj[:,iterations]
+    steady_mod=steady.copy()
     macrostate_list[i]=np.mean(steady)
     
-    if show_steady==1:
-        plt.figure()
-        sbs.heatmap(np.reshape(steady,(dim,dim)))
-        
     # Evaluation Function
     plt.figure()
-    srt_idx=np.argsort(thetas)
-    dist_mat_c=dist_mat[idxc,srt_idx]
-    steady_srt=steady[srt_idx]
-
-    rads=np.linspace(0,max(dist_mat_c),num_rads+1)
-    for idx in range(0,len(rads)-1):
-        rad_idx=np.array([idx2 for idx2 in range(0,len(dist_mat_c)) if (dist_mat_c[idx2]>rads[idx] and dist_mat_c[idx2]<=rads[idx+1])])
+    
+    dist_mat_c=dist_mat[idxc,:]
+    rads=np.linspace(0,0.5*dim-1,num_rads)
+    for idx in range(1,len(rads)):
+        rad_idx=np.array([idx2 for idx2 in range(0,len(dist_mat_c)) if (dist_mat_c[idx2]>(rads[idx]-1) and dist_mat_c[idx2]<=rads[idx])])
         if len(rad_idx>0):
-            rad_state=steady_srt[rad_idx]
-            plt.subplot(1,len(rads)-1,idx+1)
-            plt.plot(list(range(1,len(rad_state)+1)),rad_state,lw=0.5)
+            srt_idx=np.argsort(thetas[rad_idx])
+            rad_state=steady[rad_idx]
+            rad_state_srt=rad_state[srt_idx]
+            print(rad_state_srt)
+            
+            plt.subplot(1,len(rads)-1,idx)
+            plt.plot(list(range(1,len(rad_state_srt)+1)),rad_state_srt,lw=0.5)
+            
+            recolor=steady_mod[rad_idx[srt_idx]].copy()
+            for color_idx in range(0,len(recolor)):
+                if recolor[color_idx]==1:
+                    recolor[color_idx]=0.8
+                else:
+                    recolor[color_idx]=0.2
+            steady_mod[rad_idx[srt_idx]]=recolor
+            
+    if show_steady==1:
+        plt.figure()
+        sbs.heatmap(np.reshape(steady_mod,(dim,dim)))
             
 plt.show()
