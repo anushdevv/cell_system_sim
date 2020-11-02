@@ -5,6 +5,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import scipy.stats as sp
+import scipy.signal as sig
 import seaborn as sbs
 
 # Parameters
@@ -41,15 +42,16 @@ for x1 in range(0,dim):
                 dist=np.sqrt((r0*(x2-x1))**2+(r0*(y2-y1))**2)
                 dist_mat[idx1,idx2]=dist
                 
+                # Do only for centre cell
                 if idx1==idxc:
                     x=r0*(x2-x1)
                     y=r0*(y2-y1)
                     
                     # Compute modified theta
                     if (x>=0 and y<0) | (x>0 and y>0):
-                        theta=np.arctan(y/float(x+0.0000000000000001))
+                        theta=np.arctan(y/float(x+0.00000001))
                     else:
-                        theta=np.exp(-np.arctan(y/float(x+0.0000000000000001)))+10
+                        theta=np.exp(-np.arctan(y/float(x+0.00000001)))+10
                     thetas[idx2]=theta
                     
                 idx2+=1
@@ -100,17 +102,24 @@ for i in range(0,simulations):
     plt.figure()
     
     dist_mat_c=dist_mat[idxc,:]
-    rads=np.linspace(0,0.5*dim-1,num_rads)
+    rads=np.linspace(0,0.5*dim-1,num_rads+1)
     for idx in range(1,len(rads)):
         rad_idx=np.array([idx2 for idx2 in range(0,len(dist_mat_c)) if (dist_mat_c[idx2]>(rads[idx]-1) and dist_mat_c[idx2]<=rads[idx])])
         if len(rad_idx>0):
             srt_idx=np.argsort(thetas[rad_idx])
             rad_state=steady[rad_idx]
             rad_state_srt=rad_state[srt_idx]
-            print(rad_state_srt)
             
-            plt.subplot(1,len(rads)-1,idx)
+            num_plots=len(rads)-1
+            
+            # Plot sequnce
+            plt.subplot(2,num_plots,idx)
             plt.plot(list(range(1,len(rad_state_srt)+1)),rad_state_srt,lw=0.5)
+            
+            # Plot amplitude spectrum
+            amp=abs(np.fft.fft(rad_state_srt-0.5,2000).real)
+            plt.subplot(2,num_plots,num_plots+idx)
+            plt.plot(list(range(1,len(amp)+1)),amp[0:0.5*len(amp)],lw=0.5)
             
             recolor=steady_mod[rad_idx[srt_idx]].copy()
             for color_idx in range(0,len(recolor)):
