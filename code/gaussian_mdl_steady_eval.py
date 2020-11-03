@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as sp
 import scipy.signal as sig
 import seaborn as sbs
+from scipy.ndimage.measurements import label
 
 # Parameters
 parameters=sys.argv
@@ -101,26 +102,39 @@ for i in range(0,simulations):
     # Evaluation Function
     plt.figure()
     
+    # Replace isolated ON/OFF cells
+    steady_tmp=np.reshape(steady_mod,(dim,dim))
+    for x in range(1,dim-1):
+        for y in range(1,dim-1):
+            tmp_vec=[steady_tmp[x+1,y],steady_tmp[x-1,y],steady_tmp[x,y+1],steady_tmp[x,y-1]]
+            if np.sum(tmp_vec)==0:
+                steady_tmp[x,y]=0
+            elif np.sum(tmp_vec)==4:
+                steady_tmp[x,y]=1
+    steady_mod=np.reshape(steady_tmp,(N))
+    steady2=steady_mod.copy()
+    
+    # Extract circles
     dist_mat_c=dist_mat[idxc,:]
     rads=np.linspace(0,0.5*dim-1,num_rads+1)
     for idx in range(1,len(rads)):
         rad_idx=np.array([idx2 for idx2 in range(0,len(dist_mat_c)) if (dist_mat_c[idx2]>(rads[idx]-1) and dist_mat_c[idx2]<=rads[idx])])
         if len(rad_idx>0):
             srt_idx=np.argsort(thetas[rad_idx])
-            rad_state=steady[rad_idx]
+            rad_state=steady2[rad_idx]
             rad_state_srt=rad_state[srt_idx]
             
-            num_plots=len(rads)-1
-            
             # Plot sequnce
+            num_plots=len(rads)-1
             plt.subplot(2,num_plots,idx)
             plt.plot(list(range(1,len(rad_state_srt)+1)),rad_state_srt,lw=0.5)
             
             # Plot amplitude spectrum
-            amp=abs(np.fft.fft(rad_state_srt-0.5,2000).real)
+            amp=abs(np.fft.fft(rad_state_srt).real)
             plt.subplot(2,num_plots,num_plots+idx)
-            plt.plot(list(range(1,len(amp)+1)),amp[0:0.5*len(amp)],lw=0.5)
+            plt.plot(np.fft.fftfreq(rad_state_srt.size),amp,lw=0.5)
             
+            # Color circles
             recolor=steady_mod[rad_idx[srt_idx]].copy()
             for color_idx in range(0,len(recolor)):
                 if recolor[color_idx]==1:
@@ -130,7 +144,19 @@ for i in range(0,simulations):
             steady_mod[rad_idx[srt_idx]]=recolor
             
     if show_steady==1:
+        steady_mod_reshape=np.reshape(steady_mod,(dim,dim))
+        steady_reshape=np.reshape(steady,(dim,dim))
+        steady2_reshape=np.reshape(steady2,(dim,dim))
+        
         plt.figure()
-        sbs.heatmap(np.reshape(steady_mod,(dim,dim)))
-            
+        sbs.heatmap(steady_mod_reshape)
+        
+        plt.figure()
+        sbs.heatmap(steady_reshape)
+        
+        plt.figure()
+        structure=np.ones((3,3),dtype=np.int) 
+        labeled,ncomponents=label(steady2_reshape,structure)
+        sbs.heatmap(labeled+10)
+        
 plt.show()
